@@ -1,3 +1,5 @@
 .git
-local*
 tmp
+log
+local*
+.env*

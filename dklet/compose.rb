@@ -16,7 +16,11 @@ add_dsl do
   end
 
   def web_domain
-    smart_proxy_domain
+    ENV['WEB_DOMAIN'] || smart_proxy_domain
+  end
+
+  def virtual_domains
+    ENV['VIRTUAL_DOMAINS'] || smart_proxy_domain
   end
 end
 
@@ -24,7 +28,7 @@ write_dockerfile <<~Desc
   FROM ruby:2.5-alpine
   LABEL <%=image_labels%>
   ARG TIMEZONE=Asia/Shanghai
-  RUN apk add --no-cache tzdata build-base nodejs postgresql-dev git && \
+  RUN apk add --no-cache tzdata build-base nodejs postgresql-dev imagemagick && \
       cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime && \
       echo "Timezone set to: $TIMEZONE" && \
       echo "${TIMEZONE}" > /etc/timezone
@@ -71,11 +75,13 @@ write_specfile <<~Desc
       image: #{docker_image}
       ports:
         - 3000
-      <%if in_dev? %>
-      volumes:
-        - .:/src
-      <%elsif in_prod?%>
+      <%if in_prod?%>
       restart: always
+      <%end%>
+      volumes:
+        - #{app_volume_for(:public_media)}:/src/public/media
+      <%if in_dev? %>
+        - .:/src
       <%end%>
 
       environment:
@@ -91,9 +97,9 @@ write_specfile <<~Desc
       - RAILS_SERVE_STATIC_FILES=1
       <%end%>
       # web part
-      - VIRTUAL_HOST=<%=web_domain%>
+      - VIRTUAL_HOST=<%=virtual_domains%>
       <% if ssl_nginx_proxy? %>
-      - LETSENCRYPT_HOST=<%=web_domain%>
+      - LETSENCRYPT_HOST=<%=virtual_domains%>
       - LETSENCRYPT_EMAIL=<%=dklet_config_for(:letsencrypt_mail)%>
       <%end%>
       <%end%>
@@ -122,9 +128,9 @@ write_specfile <<~Desc
       ports:
         - 80
       environment:
-        - VIRTUAL_HOST=<%=web_domain%>
+        - VIRTUAL_HOST=<%=virtual_domains%>
         <% if ssl_nginx_proxy? %>
-        - LETSENCRYPT_HOST=<%=web_domain%>
+        - LETSENCRYPT_HOST=<%=virtual_domains%>
         - LETSENCRYPT_EMAIL=<%=dklet_config_for(:letsencrypt_mail)%>
         <%end%>
     <%end%>
