@@ -81,5 +81,5 @@ test:
 production:
   <<: *default
   database: csites_production
-  username: csites
-  password: <%= ENV['CSITES_DATABASE_PASSWORD'] %>
+  #username: csites
+  #password: <%= ENV['CSITES_DATABASE_PASSWORD'] %>

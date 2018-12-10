@@ -26,7 +26,7 @@ write_dockerfile <<~Desc
       bundle config mirror.https://rubygems.org $GEM_MIRROR && \
       mkdir -p lib app/apps
   COPY lib/plugin_routes.rb lib/
-  COPY app/apps app/apps/
+  #COPY app/apps app/apps/
   COPY Gemfile Gemfile.lock ./
   <% if in_dev? %>
   RUN bundle install -j4 --retry 3 --verbose
